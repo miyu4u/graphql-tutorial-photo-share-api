@@ -1,7 +1,9 @@
-const { ApolloServer } = require("apollo-server");
+const express = require("express");
+const { ApolloServer, chainResolvers } = require("apollo-server-express");
 const fs = require("fs");
 const { GraphQLScalarType } = require("graphql");
 const { resolve } = require("path");
+const expressPlayground = require('graphql-playground-middleware-express')
 
 const path = resolve(__dirname, "..", "schema", "graph.graphql");
 
@@ -103,9 +105,13 @@ const resolvers = {
 	}),
 };
 
-const server = new ApolloServer({
-	typeDefs,
-	resolvers,
-});
+const app = express();
 
-server.listen().then(({ url }) => console.log(`GraphQL Service running on ${url}`));
+const server = new ApolloServer({ typeDef, resolvers });
+
+server.applyMiddleware({ app });
+
+app.get("/", (req, res) => res.send("PhotoShare API에 오신것을 환영합니다"));
+app.get("/playground", expressPlayground({endpoint:"/graphql"}))
+
+app.listen({port:4000}, () => console.log(`GraphQL Service running on ${server.graphqlPath}));
